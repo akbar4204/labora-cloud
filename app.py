@@ -145,7 +145,6 @@ def inject_css() -> None:
             border-right: 1px solid rgba(255,255,255,.08);
         }
 
-        /* JANGAN pakai selector global putih ke semua elemen sidebar */
         [data-testid="stSidebar"] label,
         [data-testid="stSidebar"] .stMarkdown,
         [data-testid="stSidebar"] h1,
@@ -316,7 +315,6 @@ def inject_css() -> None:
             box-shadow: 0 10px 22px rgba(15,23,42,.05) !important;
         }
 
-        /* Tombol sidebar */
         [data-testid="stSidebar"] .stButton > button {
             width:100% !important;
             border-radius:14px !important;
@@ -353,7 +351,6 @@ def inject_css() -> None:
             transform: translateX(2px);
         }
 
-        /* Form controls lebih nyaman */
         .stTextInput input,
         .stTextArea textarea,
         .stDateInput input,
@@ -363,7 +360,6 @@ def inject_css() -> None:
             border-radius: 14px !important;
         }
 
-        /* MOBILE */
         @media (max-width: 768px) {
             .block-container {
                 padding-top: 0.5rem;
@@ -556,6 +552,15 @@ class Database:
     def insert_row(self, table: str, row: Dict[str, Any]) -> None:
         self.client.table(table).insert(row).execute()
 
+    def update_row_by_id(self, table: str, id_column: str, id_value: str, updates: Dict[str, Any]) -> None:
+        self.client.table(table).update(updates).eq(id_column, id_value).execute()
+
+    def delete_storage_file(self, file_ref: str) -> None:
+        clean_path = str(file_ref).strip().lstrip("/")
+        if not clean_path:
+            return
+        self.client.storage.from_(STORAGE_BUCKET).remove([clean_path])
+
     def upload_document(self, uploaded_file, kategori: str, kode: str) -> str:
         suffix = Path(uploaded_file.name).suffix.lower()
         if suffix not in ALLOWED_DOC_EXTENSIONS:
@@ -650,6 +655,7 @@ def sidebar_identity() -> str:
         "Input Harian",
         "Evaluasi & Insight",
         "Pusat Dokumen",
+        "Kelola File",
         "Panduan",
     ]
     if role == "Admin":
@@ -1147,6 +1153,91 @@ def render_documents_hub(data: Dict[str, pd.DataFrame]) -> None:
         render_table(data["instruksi_kerja"])
 
 
+def render_kelola_file(data: Dict[str, pd.DataFrame], db: Database) -> None:
+    st.subheader("Kelola File")
+    st.caption("Hapus file langsung dari storage online dan bersihkan referensinya dari database.")
+
+    role = st.session_state.get("role")
+    if role != "Admin":
+        st.info("Menu ini hanya tersedia untuk Admin.")
+        return
+
+    df = data["dokumen_inti"].copy()
+    if df.empty:
+        st.info("Belum ada data dokumen inti.")
+        return
+
+    df_with_file = df[df["file_ref"].astype(str).str.strip() != ""].copy()
+    if df_with_file.empty:
+        st.info("Belum ada dokumen yang memiliki file terlampir.")
+        return
+
+    keyword = st.text_input(
+        "Cari dokumen yang file-nya ingin dihapus",
+        placeholder="judul dokumen, kode, kategori, unit, atau nama file"
+    )
+
+    filtered = df_with_file.copy()
+    if keyword.strip():
+        mask = (
+            filtered["judul_dokumen"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["kode"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["kategori"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["unit"].astype(str).str.contains(keyword, case=False, na=False)
+            | filtered["file_ref"].astype(str).str.contains(keyword, case=False, na=False)
+        )
+        filtered = filtered[mask]
+
+    if filtered.empty:
+        st.warning("Tidak ada dokumen yang cocok dengan pencarian.")
+        return
+
+    render_table(
+        filtered[[
+            "id_dokumen", "kategori", "kode", "judul_dokumen", "status", "unit", "file_ref"
+        ]],
+        height=320
+    )
+
+    options_map = {
+        f"{row['judul_dokumen']} | {row['kode']} | {row['file_ref']}": row["id_dokumen"]
+        for _, row in filtered.iterrows()
+    }
+
+    selected_label = st.selectbox(
+        "Pilih dokumen yang file-nya akan dihapus",
+        options=list(options_map.keys())
+    )
+
+    selected_id = options_map[selected_label]
+    selected_row = filtered[filtered["id_dokumen"] == selected_id].iloc[0]
+    selected_file_ref = str(selected_row["file_ref"]).strip()
+
+    st.warning("Aksi ini akan menghapus file dari Supabase Storage dan mengosongkan kolom file_ref di database.")
+    confirm = st.checkbox("Saya yakin ingin menghapus file ini")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️ Hapus file terpilih", type="primary", use_container_width=True, disabled=not confirm):
+            try:
+                db.delete_storage_file(selected_file_ref)
+                db.update_row_by_id(
+                    "dokumen_inti",
+                    "id_dokumen",
+                    selected_id,
+                    {"file_ref": ""}
+                )
+                st.success("File berhasil dihapus dan referensi file di database sudah dibersihkan.")
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Gagal menghapus file: {exc}")
+
+    with col2:
+        public_url = build_public_url(selected_file_ref)
+        if public_url:
+            st.link_button("Buka file saat ini", public_url, use_container_width=True)
+
+
 def render_evaluasi(data: Dict[str, pd.DataFrame]) -> None:
     st.subheader("Evaluasi & Insight")
     df = data["evaluasi"].copy()
@@ -1252,6 +1343,8 @@ def main() -> None:
         render_evaluasi(data)
     elif menu == "Pusat Dokumen":
         render_documents_hub(data)
+    elif menu == "Kelola File":
+        render_kelola_file(data, db)
     elif menu == "Panel Admin":
         if st.session_state.get("role") != "Admin":
             st.warning("Menu ini hanya dapat diakses oleh Admin.")
