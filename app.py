@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import mimetypes
+import os
 import re
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from urllib.parse import unquote, urlparse
 from uuid import uuid4
 
 import pandas as pd
@@ -129,302 +131,56 @@ def inject_css() -> None:
             --danger:#ffe6e8;
             --ok:#e6fbf5;
         }
-
-        .stApp {
-            background: linear-gradient(180deg, #f3f7fb 0%, #fbfdff 100%);
-        }
-
-        .block-container {
-            max-width: 1280px;
-            padding-top: 0.8rem;
-            padding-bottom: 2rem;
-        }
-
+        .stApp {background: linear-gradient(180deg, #f3f7fb 0%, #fbfdff 100%);}
+        .block-container {max-width: 1380px; padding-top: 1rem; padding-bottom: 2rem;}
         [data-testid="stSidebar"] {
             background: linear-gradient(180deg, #0b2342 0%, #123763 50%, #173f73 100%);
             border-right: 1px solid rgba(255,255,255,.08);
         }
-
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] .stMarkdown,
-        [data-testid="stSidebar"] h1,
-        [data-testid="stSidebar"] h2,
-        [data-testid="stSidebar"] h3,
-        [data-testid="stSidebar"] h4,
-        [data-testid="stSidebar"] h5,
-        [data-testid="stSidebar"] h6,
-        [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] div:not(button):not(button *) {
-            color: #ffffff !important;
-        }
-
+        [data-testid="stSidebar"] * {color: #fff !important;}
         .sidebar-card {
             background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
             border: 1px solid rgba(255,255,255,.10);
-            border-radius: 20px;
-            padding: 1rem;
-            margin-bottom: .9rem;
+            border-radius: 20px; padding: 1rem; margin-bottom: .9rem;
             box-shadow: 0 14px 30px rgba(0,0,0,.12);
         }
-
-        .sidebar-brand {
-            font-size: 1.55rem;
-            font-weight: 800;
-            margin-bottom: .2rem;
-            color: #ffffff !important;
-        }
-
-        .sidebar-sub {
-            font-size: .94rem;
-            color: rgba(255,255,255,.82) !important;
-            line-height: 1.5;
-        }
-
+        .sidebar-brand {font-size: 1.65rem; font-weight: 800; margin-bottom: .2rem;}
+        .sidebar-sub {font-size: .94rem; color: rgba(255,255,255,.82) !important; line-height: 1.5;}
         .sidebar-role {
-            display:inline-block;
-            margin-top:.35rem;
-            padding:.36rem .72rem;
-            border-radius:999px;
-            background: rgba(30, 220, 200, .14);
-            border: 1px solid rgba(130,255,239,.18);
-            font-weight:700;
-            color:#ffffff !important;
+            display:inline-block; margin-top:.35rem; padding:.36rem .72rem; border-radius:999px;
+            background: rgba(30, 220, 200, .14); border: 1px solid rgba(130,255,239,.18); font-weight:700;
         }
-
         .hero {
             background: linear-gradient(135deg, #0d2b52 0%, #1d5f93 58%, #1d9a95 100%);
-            border-radius: 28px;
-            padding: 1.4rem 1.4rem 1.2rem 1.4rem;
-            color: #fff;
-            box-shadow: 0 20px 35px rgba(13,43,82,.18);
-            margin-bottom: 1rem;
+            border-radius: 28px; padding: 1.6rem 1.6rem 1.4rem 1.6rem; color: #fff;
+            box-shadow: 0 20px 35px rgba(13,43,82,.18); margin-bottom: 1rem;
         }
-
-        .hero h1 {
-            color: #ffffff !important;
-            margin: 0 0 .45rem 0;
-            font-size: 2.15rem;
-            line-height: 1.1;
-        }
-
-        .hero p {
-            margin: 0;
-            color: rgba(255,255,255,.92);
-            line-height: 1.65;
-            font-size: 1rem;
-        }
-
-        .chip-wrap {
-            display:flex;
-            flex-wrap:wrap;
-            gap:.55rem;
-            margin-top:1rem;
-        }
-
+        .hero h1 {color: #ffffff !important; margin:0 0 .4rem 0; font-size: 2.2rem;}
+        .hero p {margin:0; color: rgba(255,255,255,.92); line-height:1.7;}
+        .chip-wrap {display:flex; flex-wrap:wrap; gap:.65rem; margin-top:1rem;}
         .chip {
-            border-radius: 999px;
-            padding: .45rem .78rem;
-            background: rgba(255,255,255,.12);
-            border: 1px solid rgba(255,255,255,.15);
-            font-weight:700;
-            font-size:.86rem;
-            color:#ffffff !important;
+            border-radius: 999px; padding: .48rem .82rem; background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.15); font-weight:700; font-size:.9rem;
         }
-
         .metric-box {
-            background:#fff;
-            border:1px solid var(--line);
-            border-radius: 22px;
-            padding: 1rem 1rem .9rem;
-            box-shadow: 0 10px 22px rgba(15,23,42,.05);
-            margin-bottom: .9rem;
-            min-height: 118px;
+            background:#fff; border:1px solid var(--line); border-radius: 22px; padding: 1rem 1rem .9rem;
+            box-shadow: 0 10px 22px rgba(15,23,42,.05); margin-bottom: .9rem;
         }
-
-        .metric-label {
-            font-size:.9rem;
-            color: var(--muted);
-        }
-
-        .metric-value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--text);
-            line-height: 1.15;
-        }
-
+        .metric-label {font-size:.9rem; color: var(--muted);}
+        .metric-value {font-size: 2.1rem; font-weight: 800; color: var(--text);}
         .section-box {
             background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
-            border:1px solid var(--line);
-            border-radius: 22px;
-            padding: 1rem 1rem .9rem;
-            box-shadow: 0 12px 24px rgba(15,23,42,.05);
-            margin-bottom: .95rem;
+            border:1px solid var(--line); border-radius: 22px; padding: 1rem 1rem .9rem;
+            box-shadow: 0 12px 24px rgba(15,23,42,.05); margin-bottom: .95rem;
         }
-
-        .section-title {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--text);
-            margin-bottom: .7rem;
-        }
-
+        .section-title {font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: .7rem;}
         .action-card {
-            background:#fff;
-            border:1px solid var(--line);
-            border-radius:20px;
-            padding:1rem;
-            box-shadow: 0 10px 22px rgba(15,23,42,.05);
-            min-height: 140px;
+            background:#fff; border:1px solid var(--line); border-radius:20px; padding:1rem;
+            box-shadow: 0 10px 22px rgba(15,23,42,.05); min-height: 152px;
         }
-
-        .action-card h4 {
-            margin:0 0 .35rem 0;
-            color: var(--text);
-        }
-
-        .action-card p {
-            margin:0;
-            color: var(--muted);
-            line-height:1.55;
-        }
-
-        .callout {
-            padding:.95rem 1rem;
-            border-radius:18px;
-            border:1px solid var(--line);
-            margin-bottom:.7rem;
-            line-height:1.55;
-        }
-
-        .callout.warn {background: var(--warn);}
-        .callout.danger {background: var(--danger);}
-        .callout.ok {background: var(--ok);}
-
-        .small-muted {
-            font-size:.84rem;
-            color: rgba(255,255,255,.76) !important;
-            margin-top:.35rem;
-        }
-
-        [data-testid="stDataFrame"] {
-            border-radius: 16px !important;
-            overflow: hidden !important;
-            border: 1px solid var(--line) !important;
-            box-shadow: 0 10px 22px rgba(15,23,42,.05) !important;
-        }
-
-        [data-testid="stSidebar"] .stButton > button {
-            width:100% !important;
-            border-radius:14px !important;
-            border:1px solid rgba(0,0,0,.10) !important;
-            background: linear-gradient(180deg, #ffffff 0%, #edf2f8 100%) !important;
-            color:#13233a !important;
-            font-weight:800 !important;
-            box-shadow: 0 10px 18px rgba(0,0,0,.12) !important;
-            min-height: 44px;
-        }
-
-        [data-testid="stSidebar"] .stButton > button * {
-            color:#13233a !important;
-            fill:#13233a !important;
-            font-weight:800 !important;
-        }
-
-        [data-testid="stSidebar"] .stButton > button:hover {
-            background: linear-gradient(180deg, #ffffff 0%, #e7eef7 100%) !important;
-            border:1px solid rgba(0,0,0,.16) !important;
-        }
-
-        [data-testid="stSidebar"] div[role="radiogroup"] > label {
-            background: rgba(255,255,255,.05);
-            border:1px solid rgba(255,255,255,.08);
-            border-radius: 14px;
-            padding: .55rem .7rem;
-            margin-bottom: .3rem;
-            transition: all .18s ease;
-        }
-
-        [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
-            background: rgba(255,255,255,.12);
-            transform: translateX(2px);
-        }
-
-        .stTextInput input,
-        .stTextArea textarea,
-        .stDateInput input,
-        .stNumberInput input,
-        .stSelectbox div[data-baseweb="select"] > div,
-        .stMultiSelect div[data-baseweb="select"] > div {
-            border-radius: 14px !important;
-        }
-
-        @media (max-width: 768px) {
-            .block-container {
-                padding-top: 0.5rem;
-                padding-bottom: 1.25rem;
-            }
-
-            .hero {
-                border-radius: 22px;
-                padding: 1.1rem 1rem 1rem 1rem;
-                margin-bottom: .85rem;
-            }
-
-            .hero h1 {
-                font-size: 1.85rem !important;
-            }
-
-            .hero p {
-                font-size: .96rem !important;
-                line-height: 1.6 !important;
-            }
-
-            .chip-wrap {
-                gap: .45rem;
-            }
-
-            .chip {
-                font-size: .8rem;
-                padding: .4rem .68rem;
-            }
-
-            .metric-box {
-                border-radius: 18px;
-                padding: .9rem .9rem .8rem;
-                min-height: 100px;
-            }
-
-            .metric-value {
-                font-size: 1.7rem;
-            }
-
-            .section-box {
-                border-radius: 18px;
-                padding: .9rem .9rem .8rem;
-            }
-
-            .section-title {
-                font-size: .96rem;
-            }
-
-            .action-card {
-                border-radius: 18px;
-                padding: .9rem;
-                min-height: auto;
-            }
-
-            .sidebar-card {
-                border-radius: 18px;
-                padding: .9rem;
-            }
-
-            [data-testid="stSidebar"] .stButton > button {
-                min-height: 42px;
-                font-size: .95rem !important;
-            }
-        }
+        .callout {padding:.95rem 1rem; border-radius:18px; border:1px solid var(--line); margin-bottom:.7rem;}
+        .callout.warn {background: var(--warn);} .callout.danger {background: var(--danger);} .callout.ok {background: var(--ok);}
+        .small-muted {font-size:.9rem; color:#617289;}
         </style>
         """,
         unsafe_allow_html=True,
@@ -528,12 +284,42 @@ def build_public_url(file_ref: str) -> Optional[str]:
     return f"{base}/{clean_path}"
 
 
+def resolve_storage_object_path(file_ref: str) -> Optional[str]:
+    """Return Supabase Storage object path for a LABORA-uploaded file.
+
+    `file_ref` is normally stored as an object path, for example:
+    `sop/SOP_20260421_abcd_file.pdf`.
+
+    Some old/manual records may contain full public URLs or external links. This
+    function only returns a removable object path when the value clearly points
+    to the configured LABORA storage bucket. External/manual URLs are ignored so
+    the delete action does not accidentally touch unrelated files.
+    """
+    ref = str(file_ref or "").strip()
+    if not ref:
+        return None
+
+    parsed = urlparse(ref)
+    if parsed.scheme in {"http", "https"}:
+        path = unquote(parsed.path or "")
+        marker = f"/storage/v1/object/public/{STORAGE_BUCKET}/"
+        if marker in path:
+            return path.split(marker, 1)[1].lstrip("/") or None
+        return None
+
+    if ref.startswith("/"):
+        ref = ref.lstrip("/")
+    if ".." in Path(ref).parts:
+        return None
+    return ref or None
+
+
 def show_setup_error(exc: Exception) -> None:
     st.error("Aplikasi belum siap dipakai karena konfigurasi Streamlit secrets atau Supabase belum lengkap.")
     st.code(str(exc))
     st.markdown(
         "Tambahkan secrets Supabase dan auth ke **App settings > Secrets** di Streamlit Community Cloud. "
-        "Lihat file `secrets.example.toml` dan `README_DEPLOY.md`."
+        "Lihat file `secrets.example.toml` dan `README_DEPLOY.md` yang saya sertakan."
     )
 
 
@@ -552,20 +338,14 @@ class Database:
     def insert_row(self, table: str, row: Dict[str, Any]) -> None:
         self.client.table(table).insert(row).execute()
 
-    def update_row_by_id(self, table: str, id_column: str, id_value: str, updates: Dict[str, Any]) -> None:
-        self.client.table(table).update(updates).eq(id_column, id_value).execute()
-
-    def delete_storage_file(self, file_ref: str) -> None:
-        clean_path = str(file_ref).strip().lstrip("/")
-        if not clean_path:
-            return
-        self.client.storage.from_(STORAGE_BUCKET).remove([clean_path])
+    def is_duplicate(self, table: str, column: str, value: str) -> bool:
+        resp = self.client.table(table).select(column).ilike(column, value).limit(1).execute()
+        return bool(resp.data)
 
     def upload_document(self, uploaded_file, kategori: str, kode: str) -> str:
         suffix = Path(uploaded_file.name).suffix.lower()
         if suffix not in ALLOWED_DOC_EXTENSIONS:
             raise ValueError(f"Format file {suffix} belum diizinkan.")
-
         size_mb = uploaded_file.size / (1024 * 1024)
         if size_mb > MAX_UPLOAD_MB:
             raise ValueError(f"Ukuran file melebihi {MAX_UPLOAD_MB} MB.")
@@ -576,7 +356,6 @@ class Database:
         safe_name = sanitize_filename(uploaded_file.name)
         object_path = f"{category_slug}/{code_slug}_{timestamp}_{uuid4().hex[:8]}_{safe_name}"
         file_bytes = uploaded_file.getvalue()
-
         self.client.storage.from_(STORAGE_BUCKET).upload(
             path=object_path,
             file=file_bytes,
@@ -586,6 +365,28 @@ class Database:
             },
         )
         return object_path
+
+    def update_document_file_ref(self, id_dokumen: str, file_ref: str) -> None:
+        self.client.table("dokumen_inti").update({"file_ref": file_ref}).eq("id_dokumen", id_dokumen).execute()
+
+    def delete_storage_object(self, file_ref: str) -> bool:
+        object_path = resolve_storage_object_path(file_ref)
+        if not object_path:
+            return False
+        self.client.storage.from_(STORAGE_BUCKET).remove([object_path])
+        return True
+
+    def delete_document_file(self, id_dokumen: str, file_ref: str) -> bool:
+        removed_from_storage = self.delete_storage_object(file_ref)
+        self.update_document_file_ref(id_dokumen, "")
+        return removed_from_storage
+
+    def delete_document_row(self, id_dokumen: str, file_ref: str = "") -> bool:
+        removed_from_storage = False
+        if str(file_ref or "").strip():
+            removed_from_storage = self.delete_storage_object(file_ref)
+        self.client.table("dokumen_inti").delete().eq("id_dokumen", id_dokumen).execute()
+        return removed_from_storage
 
 
 def load_data(db: Database) -> Dict[str, pd.DataFrame]:
@@ -600,7 +401,6 @@ def load_data(db: Database) -> Dict[str, pd.DataFrame]:
         "evaluasi": "tanggal",
         "panduan": "urutan",
     }
-
     for table, columns in TABLES.items():
         df = db.fetch_table(table, order_by=order_map.get(table))
         if df.empty:
@@ -610,40 +410,36 @@ def load_data(db: Database) -> Dict[str, pd.DataFrame]:
             if col not in df.columns:
                 df[col] = ""
         data[table] = df[columns].fillna("")
-
     return data
 
 
 def login_form() -> None:
-    st.markdown(
-        f"""
-        <div class="hero" style="margin-top:.3rem;">
-            <div style="font-size:.9rem; opacity:.92; margin-bottom:.35rem;">
-                Pilot Dashboard Manajemen Laboratorium Pembelajaran
+    left, center, right = st.columns([1, 1.2, 1])
+    with center:
+        st.markdown(
+            f'''
+            <div class="hero" style="margin-top:2.2rem; text-align:left;">
+                <div style="font-size:.9rem; opacity:.9; margin-bottom:.3rem;">Pilot Dashboard Manajemen Laboratorium Pembelajaran</div>
+                <h1>{APP_NAME}</h1>
+                <p>{APP_TAGLINE}. Masuk sebagai admin atau reviewer untuk mengakses modul LABORA dengan alur kerja yang lebih sederhana.</p>
             </div>
-            <h1>{APP_NAME}</h1>
-            <p>{APP_TAGLINE}. Masuk sebagai admin atau reviewer untuk mengakses modul LABORA dengan alur kerja yang lebih sederhana.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.subheader("Login Aplikasi")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Masuk", type="primary", use_container_width=True):
-        user = next((u for u in auth_users() if u["username"] == username.strip().lower()), None)
-        if user and password == user["password"]:
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username.strip().lower()
-            st.session_state["role"] = user["role"]
-            st.session_state["menu_selection"] = "Beranda & Prioritas"
-            st.session_state["show_welcome"] = True
-            st.rerun()
-        st.error("Username atau password tidak sesuai.")
-
-    st.caption("Kredensial dibaca dari Streamlit secrets, bukan dari kode sumber.")
+            ''',
+            unsafe_allow_html=True,
+        )
+        st.subheader("Login Aplikasi")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Masuk", type="primary", use_container_width=True):
+            user = next((u for u in auth_users() if u["username"] == username.strip().lower()), None)
+            if user and password == user["password"]:
+                st.session_state["logged_in"] = True
+                st.session_state["username"] = username.strip().lower()
+                st.session_state["role"] = user["role"]
+                st.session_state["menu_selection"] = "Beranda & Prioritas"
+                st.session_state["show_welcome"] = True
+                st.rerun()
+            st.error("Username atau password tidak sesuai.")
+        st.caption("Kredensial dibaca dari Streamlit secrets, bukan dari kode sumber.")
 
 
 def sidebar_identity() -> str:
@@ -655,7 +451,6 @@ def sidebar_identity() -> str:
         "Input Harian",
         "Evaluasi & Insight",
         "Pusat Dokumen",
-        "Kelola File",
         "Panduan",
     ]
     if role == "Admin":
@@ -666,7 +461,7 @@ def sidebar_identity() -> str:
         current = options[0]
 
     st.sidebar.markdown(
-        f"""
+        f'''
         <div class="sidebar-card">
             <div class="sidebar-brand">LABORA</div>
             <div class="sidebar-sub">Sistem manajemen perangkat pembelajaran laboratorium</div>
@@ -676,7 +471,7 @@ def sidebar_identity() -> str:
             <div class="sidebar-role">{role}</div>
             <div class="sidebar-sub" style="margin-top:.55rem;">User: <b>{st.session_state.get("username", "-")}</b></div>
         </div>
-        """,
+        ''',
         unsafe_allow_html=True,
     )
 
@@ -684,19 +479,18 @@ def sidebar_identity() -> str:
     st.session_state["menu_selection"] = menu
 
     st.sidebar.markdown("### Aksi Cepat")
-    if st.sidebar.button("🔎 Cari dokumen", use_container_width=True):
+    if st.sidebar.button("Cari dokumen", use_container_width=True):
         go_to("Cari & Buka Dokumen")
         st.rerun()
-    if st.sidebar.button("📌 Lihat gap prioritas", use_container_width=True):
+    if st.sidebar.button("Lihat gap prioritas", use_container_width=True):
         go_to("Cek Gap & Tindak Lanjut")
         st.rerun()
-    if role == "Admin" and st.sidebar.button("📝 Tambah data harian", use_container_width=True):
+    if role == "Admin" and st.sidebar.button("Tambah data harian", use_container_width=True):
         go_to("Input Harian")
         st.rerun()
-    if st.sidebar.button("🚪 Logout", use_container_width=True):
+    if st.sidebar.button("Logout", use_container_width=True):
         st.session_state.clear()
         st.rerun()
-
     st.sidebar.markdown('<div class="small-muted">Keluar dari sesi aktif aplikasi</div>', unsafe_allow_html=True)
     return menu
 
@@ -704,9 +498,7 @@ def sidebar_identity() -> str:
 def render_welcome_strip() -> None:
     if st.session_state.get("show_welcome"):
         role = st.session_state.get("role", "Pengguna")
-        st.success(
-            f"Selamat datang. Anda masuk sebagai {role}. Mulai dari Beranda & Prioritas untuk melihat pekerjaan terpenting hari ini."
-        )
+        st.success(f"Selamat datang. Anda masuk sebagai {role}. Mulai dari Beranda & Prioritas untuk melihat pekerjaan terpenting hari ini.")
         if st.button("Tutup panduan singkat"):
             st.session_state["show_welcome"] = False
             st.rerun()
@@ -753,77 +545,63 @@ def render_dashboard(data: Dict[str, pd.DataFrame]) -> None:
     ])
 
     st.markdown(
-        f"""
+        f'''
         <div class="hero">
-            <div style="font-size:.86rem; opacity:.92; margin-bottom:.35rem;">Pilot Dashboard Manajemen Laboratorium Pembelajaran</div>
+            <div style="font-size:.86rem; opacity:.9; margin-bottom:.3rem;">Pilot Dashboard Manajemen Laboratorium Pembelajaran</div>
             <h1>Prioritas Hari Ini</h1>
             <p>LABORA membantu pengguna menemukan pekerjaan berikutnya: dokumen yang harus ditinjau, gap yang perlu ditutup, dan aktivitas harian yang perlu dicatat.</p>
             <div class="chip-wrap">{chips}</div>
         </div>
-        """,
+        ''',
         unsafe_allow_html=True,
     )
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
         render_metric("Dokumen Inti", total_docs)
     with c2:
         render_metric("Draft Perlu Review", draft_docs)
-
-    c3, c4 = st.columns(2)
     with c3:
         render_metric("Gap Aktif", gap_docs)
     with c4:
         render_metric("Rata-rata Evaluasi", f"{avg_eval:.1f}")
 
-    st.markdown('<div class="section-box"><div class="section-title">Tiga Fokus Utama</div>', unsafe_allow_html=True)
-    if high_priority_drafts.empty:
-        st.markdown('<div class="callout ok">Tidak ada dokumen prioritas tinggi berstatus draft saat ini.</div>', unsafe_allow_html=True)
-    else:
-        draft_titles = "<br>".join(
-            [f"• {row['judul_dokumen']} ({row['unit']})" for _, row in high_priority_drafts.head(3).iterrows()]
-        )
-        st.markdown(f'<div class="callout danger"><b>Dokumen draft prioritas tinggi</b><br>{draft_titles}</div>', unsafe_allow_html=True)
+    left, right = st.columns([1.15, 0.85])
+    with left:
+        st.markdown('<div class="section-box"><div class="section-title">Tiga Fokus Utama</div>', unsafe_allow_html=True)
+        if high_priority_drafts.empty:
+            st.markdown('<div class="callout ok">Tidak ada dokumen prioritas tinggi berstatus draft saat ini.</div>', unsafe_allow_html=True)
+        else:
+            draft_titles = "<br>".join([f"• {row['judul_dokumen']} ({row['unit']})" for _, row in high_priority_drafts.head(3).iterrows()])
+            st.markdown(f'<div class="callout danger"><b>Dokumen draft prioritas tinggi</b><br>{draft_titles}</div>', unsafe_allow_html=True)
+        if urgent_gaps.empty:
+            st.markdown('<div class="callout ok">Tidak ada gap aktif pada inventaris kebutuhan.</div>', unsafe_allow_html=True)
+        else:
+            gap_titles = "<br>".join([f"• {row['nama_dokumen']} - target {row['target_selesai']}" for _, row in urgent_gaps.head(3).iterrows()])
+            st.markdown(f'<div class="callout warn"><b>Gap yang perlu ditindaklanjuti</b><br>{gap_titles}</div>', unsafe_allow_html=True)
+        if low_eval.empty:
+            st.markdown('<div class="callout ok">Belum ada evaluasi yang perlu disorot.</div>', unsafe_allow_html=True)
+        else:
+            low_titles = "<br>".join([f"• {row['unit']} - {row['aspek']} ({int(row['skor_num'])})" for _, row in low_eval.head(3).iterrows()])
+            st.markdown(f'<div class="callout warn"><b>Skor evaluasi terendah</b><br>{low_titles}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if urgent_gaps.empty:
-        st.markdown('<div class="callout ok">Tidak ada gap aktif pada inventaris kebutuhan.</div>', unsafe_allow_html=True)
-    else:
-        gap_titles = "<br>".join(
-            [f"• {row['nama_dokumen']} - target {row['target_selesai']}" for _, row in urgent_gaps.head(3).iterrows()]
-        )
-        st.markdown(f'<div class="callout warn"><b>Gap yang perlu ditindaklanjuti</b><br>{gap_titles}</div>', unsafe_allow_html=True)
+    with right:
+        st.markdown('<div class="section-box"><div class="section-title">Logbook Terbaru</div>', unsafe_allow_html=True)
+        latest_log = logbook_df[["tanggal", "laboratorium", "kegiatan", "petugas"]].sort_values("tanggal", ascending=False).head(5) if not logbook_df.empty else logbook_df
+        render_table(latest_log, height=240)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    if low_eval.empty:
-        st.markdown('<div class="callout ok">Belum ada evaluasi yang perlu disorot.</div>', unsafe_allow_html=True)
-    else:
-        low_titles = "<br>".join(
-            [f"• {row['unit']} - {row['aspek']} ({int(row['skor_num'])})" for _, row in low_eval.head(3).iterrows()]
-        )
-        st.markdown(f'<div class="callout warn"><b>Skor evaluasi terendah</b><br>{low_titles}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="section-box"><div class="section-title">Logbook Terbaru</div>', unsafe_allow_html=True)
-    latest_log = (
-        logbook_df[["tanggal", "laboratorium", "kegiatan", "petugas"]].sort_values("tanggal", ascending=False).head(5)
-        if not logbook_df.empty else logbook_df
-    )
-    render_table(latest_log, height=240)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="section-box"><div class="section-title">Dokumen Terakhir Diperbarui</div>', unsafe_allow_html=True)
-    recent_docs = (
-        dokumen_df.sort_values("tanggal_update_parsed", ascending=False)[["kategori", "judul_dokumen", "status", "tanggal_update"]].head(5)
-        if not dokumen_df.empty else dokumen_df
-    )
-    render_table(recent_docs, height=220)
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-box"><div class="section-title">Dokumen Terakhir Diperbarui</div>', unsafe_allow_html=True)
+        recent_docs = dokumen_df.sort_values("tanggal_update_parsed", ascending=False)[["kategori", "judul_dokumen", "status", "tanggal_update"]].head(5) if not dokumen_df.empty else dokumen_df
+        render_table(recent_docs, height=220)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 def global_search_results(data: Dict[str, pd.DataFrame], keyword: str) -> pd.DataFrame:
     keyword = keyword.strip()
     if not keyword:
         return pd.DataFrame()
-
     frames: List[pd.DataFrame] = []
     sources = {
         "Dokumen Inti": (data["dokumen_inti"], ["judul_dokumen", "kode", "kategori", "unit", "deskripsi", "file_ref"]),
@@ -831,7 +609,6 @@ def global_search_results(data: Dict[str, pd.DataFrame], keyword: str) -> pd.Dat
         "Modul K3": (data["modul_k3"], ["judul_modul", "materi_pokok", "sasaran", "metode", "penanggung_jawab"]),
         "Instruksi Kerja": (data["instruksi_kerja"], ["judul_instruksi", "kode_ik", "langkah_utama", "alat_terkait", "apd_wajib", "pic"]),
     }
-
     for source_name, (df, cols) in sources.items():
         if df.empty:
             continue
@@ -841,38 +618,26 @@ def global_search_results(data: Dict[str, pd.DataFrame], keyword: str) -> pd.Dat
             matched = df.loc[mask].copy()
             matched.insert(0, "sumber", source_name)
             frames.append(matched)
-
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
 def render_search(data: Dict[str, pd.DataFrame]) -> None:
     st.subheader("Cari & Buka Dokumen")
     st.caption("Cari lintas dokumen inti, SOP, modul K3, dan instruksi kerja dari satu tempat.")
-
-    keyword = st.text_input(
-        "Cari judul, kode, unit, PIC, atau kata kunci lain",
-        placeholder="contoh: APD, inventaris, K3, praktikum"
-    )
-
+    keyword = st.text_input("Cari judul, kode, unit, PIC, atau kata kunci lain", placeholder="contoh: APD, inventaris, K3, praktikum")
     if not keyword.strip():
         st.info("Masukkan kata kunci untuk memulai pencarian.")
         return
-
     results = global_search_results(data, keyword)
     if results.empty:
         st.warning("Tidak ada hasil yang cocok dengan kata kunci tersebut.")
         return
-
     st.success(f"Ditemukan {len(results)} hasil yang relevan.")
-    source_filter = st.multiselect(
-        "Filter sumber",
-        sorted(results["sumber"].unique().tolist()),
-        default=sorted(results["sumber"].unique().tolist())
-    )
+    source_filter = st.multiselect("Filter sumber", sorted(results["sumber"].unique().tolist()), default=sorted(results["sumber"].unique().tolist()))
     if source_filter:
         results = results[results["sumber"].isin(source_filter)]
 
-    for _, row in results.head(30).iterrows():
+    for idx, row in results.head(30).iterrows():
         title = row.get("judul_dokumen") or row.get("judul_sop") or row.get("judul_modul") or row.get("judul_instruksi")
         with st.expander(f"{row['sumber']} — {title}"):
             for col, val in row.items():
@@ -880,7 +645,6 @@ def render_search(data: Dict[str, pd.DataFrame]) -> None:
                     continue
                 label = TABLE_HEADER_MAP.get(col, str(col).replace("_", " ").title())
                 st.markdown(f"**{label}:** {val}")
-
             if row["sumber"] == "Dokumen Inti":
                 public_url = build_public_url(str(row.get("file_ref", "")))
                 if public_url:
@@ -895,7 +659,6 @@ def render_gap_analysis(data: Dict[str, pd.DataFrame]) -> None:
     if df.empty:
         st.info("Belum ada data inventaris kebutuhan.")
         return
-
     df["gap_num"] = safe_numeric(df["gap"])
     df["target_selesai_parsed"] = parse_date_column(df["target_selesai"])
 
@@ -913,16 +676,8 @@ def render_gap_analysis(data: Dict[str, pd.DataFrame]) -> None:
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Item dengan Gap", int((filtered["gap_num"] > 0).sum()) if not filtered.empty else 0)
-    c2.metric(
-        "Gap Prioritas Tinggi",
-        int(((filtered["gap_num"] > 0) & (filtered["tingkat_kebutuhan"].astype(str).str.lower() == "tinggi")).sum()) if not filtered.empty else 0
-    )
-    c3.metric(
-        "Deadline Terdekat",
-        filtered["target_selesai_parsed"].min().strftime("%Y-%m-%d")
-        if not filtered.empty and filtered["target_selesai_parsed"].notna().any()
-        else "-"
-    )
+    c2.metric("Gap Prioritas Tinggi", int(((filtered["gap_num"] > 0) & (filtered["tingkat_kebutuhan"].astype(str).str.lower() == "tinggi")).sum()) if not filtered.empty else 0)
+    c3.metric("Deadline Terdekat", filtered["target_selesai_parsed"].min().strftime("%Y-%m-%d") if not filtered.empty and filtered["target_selesai_parsed"].notna().any() else "-")
 
     urgent = filtered.sort_values(["target_selesai_parsed", "gap_num"], ascending=[True, False]).head(5)
     if not urgent.empty:
@@ -936,14 +691,10 @@ def render_gap_analysis(data: Dict[str, pd.DataFrame]) -> None:
                 f'{row["catatan_gap_analysis"]}</div>',
                 unsafe_allow_html=True,
             )
-
-    render_table(
-        filtered[[
-            "kelompok_dokumen", "nama_dokumen", "ketersediaan", "tingkat_kebutuhan", "gap",
-            "prioritas_tindak_lanjut", "target_selesai", "pic", "catatan_gap_analysis"
-        ]],
-        height=360
-    )
+    render_table(filtered[[
+        "kelompok_dokumen", "nama_dokumen", "ketersediaan", "tingkat_kebutuhan", "gap",
+        "prioritas_tindak_lanjut", "target_selesai", "pic", "catatan_gap_analysis"
+    ]], height=360)
 
 
 def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
@@ -967,7 +718,6 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
             kendala = st.text_area("Temuan / Kendala")
             tindak_lanjut = st.text_area("Tindak lanjut")
             verifikator = st.text_input("Verifikator")
-
             if st.form_submit_button("Simpan logbook", type="primary"):
                 required = [lab, kegiatan, petugas, verifikator]
                 if not all(str(v).strip() for v in required):
@@ -984,25 +734,22 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
                         "verifikator": verifikator.strip(),
                     })
                     st.success("Logbook berhasil disimpan.")
+                    st.cache_data.clear()
                     st.rerun()
 
     with tabs[1]:
         with st.form("form_evaluasi"):
             next_eval_id = next_id("EVA", data["evaluasi"]["id_evaluasi"]) if not data["evaluasi"].empty else "EVA-001"
             st.text_input("ID Evaluasi", value=next_eval_id, disabled=True)
-
             c1, c2 = st.columns(2)
             tanggal = c1.date_input("Tanggal evaluasi", value=date.today())
             unit = c2.text_input("Unit / Laboratorium")
             aspek = st.text_input("Aspek")
-
             c3, c4 = st.columns(2)
             skor = c3.number_input("Skor", min_value=0, max_value=100, value=80)
             kategori = c4.selectbox("Kategori", ["Baik", "Cukup", "Kurang"])
-
             rekomendasi = st.text_area("Rekomendasi")
             reviewer = st.text_input("Reviewer")
-
             if st.form_submit_button("Simpan evaluasi", type="primary"):
                 required = [unit, aspek, reviewer]
                 if not all(str(v).strip() for v in required):
@@ -1019,25 +766,22 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
                         "reviewer": reviewer.strip(),
                     })
                     st.success("Evaluasi berhasil disimpan.")
+                    st.cache_data.clear()
                     st.rerun()
 
     with tabs[2]:
         with st.form("form_dokumen"):
             next_doc_id = next_id("DOC", data["dokumen_inti"]["id_dokumen"]) if not data["dokumen_inti"].empty else "DOC-001"
             st.text_input("ID Dokumen", value=next_doc_id, disabled=True)
-
             c1, c2, c3 = st.columns(3)
             kategori = c1.selectbox("Kategori", ["SOP", "Modul K3", "Instruksi Kerja", "Logbook", "Evaluasi", "Panduan", "Lainnya"])
             kode = c2.text_input("Kode")
             versi = c3.text_input("Versi", value="1.0")
-
             judul = st.text_input("Judul Dokumen")
-
             c4, c5, c6 = st.columns(3)
             status = c4.selectbox("Status", ["Draft", "Final", "Review"])
             penanggung_jawab = c5.text_input("Penanggung Jawab")
             unit = c6.text_input("Unit")
-
             c7, c8 = st.columns(2)
             tanggal_update = c7.date_input("Tanggal update", value=date.today())
             prioritas = c8.selectbox("Prioritas", ["Tinggi", "Sedang", "Rendah"])
@@ -1045,7 +789,6 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
             upload_mode = st.radio("Sumber referensi dokumen", ["Upload file", "Isi path manual", "Tanpa file"], horizontal=True)
             uploaded_doc = None
             manual_file_ref = ""
-
             if upload_mode == "Upload file":
                 uploaded_doc = st.file_uploader(
                     f"Upload file dokumen (maks. {MAX_UPLOAD_MB} MB)",
@@ -1054,7 +797,6 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
                 )
             elif upload_mode == "Isi path manual":
                 manual_file_ref = st.text_input("Referensi file / URL", placeholder="misalnya https://... atau path file")
-
             deskripsi = st.text_area("Deskripsi")
 
             if st.form_submit_button("Simpan dokumen", type="primary"):
@@ -1062,7 +804,6 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
                 if not all(str(v).strip() for v in required):
                     st.error("Kode, judul dokumen, penanggung jawab, dan unit wajib diisi.")
                     return
-
                 if not data["dokumen_inti"].empty:
                     existing_code = data["dokumen_inti"]["kode"].astype(str).map(normalize_text)
                     existing_title = data["dokumen_inti"]["judul_dokumen"].astype(str).map(normalize_text)
@@ -1072,7 +813,6 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
                     if normalize_text(judul) in set(existing_title):
                         st.error("Judul dokumen sudah ada. Gunakan judul berbeda atau ubah data yang lama.")
                         return
-
                 file_ref = ""
                 if upload_mode == "Upload file":
                     if uploaded_doc is None:
@@ -1104,25 +844,19 @@ def render_input_harian(data: Dict[str, pd.DataFrame], db: Database) -> None:
                     "deskripsi": deskripsi.strip(),
                 })
                 st.success("Dokumen inti berhasil disimpan.")
+                st.cache_data.clear()
                 st.rerun()
 
 
-def render_documents_hub(data: Dict[str, pd.DataFrame]) -> None:
+def render_documents_hub(data: Dict[str, pd.DataFrame], db: Database) -> None:
     st.subheader("Pusat Dokumen")
-    section = st.radio(
-        "Jenis Dokumen",
-        ["Dokumen Inti", "SOP", "Modul K3", "Instruksi Kerja"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-
+    section = st.radio("Jenis Dokumen", ["Dokumen Inti", "SOP", "Modul K3", "Instruksi Kerja"], horizontal=True, label_visibility="collapsed")
     if section == "Dokumen Inti":
         df = data["dokumen_inti"].copy()
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns([1, 1, 1.2])
         category = c1.selectbox("Filter Kategori", ["Semua"] + sorted(df["kategori"].astype(str).unique().tolist()) if not df.empty else ["Semua"])
         status = c2.selectbox("Filter Status", ["Semua"] + sorted(df["status"].astype(str).unique().tolist()) if not df.empty else ["Semua"])
-        keyword = st.text_input("Cari Judul / Kode / Unit")
-
+        keyword = c3.text_input("Cari Judul / Kode / Unit")
         filtered = df.copy()
         if not filtered.empty:
             if category != "Semua":
@@ -1136,15 +870,67 @@ def render_documents_hub(data: Dict[str, pd.DataFrame]) -> None:
                     | filtered["unit"].astype(str).str.contains(keyword, case=False, na=False)
                 )
                 filtered = filtered[mask]
-
         render_table(filtered)
-        st.download_button(
-            "Unduh hasil filter (CSV)",
-            filtered.to_csv(index=False).encode("utf-8-sig"),
-            file_name="dokumen_inti_filter.csv",
-            mime="text/csv"
-        )
+        st.download_button("Unduh hasil filter (CSV)", filtered.to_csv(index=False).encode("utf-8-sig"), file_name="dokumen_inti_filter.csv", mime="text/csv")
 
+        if st.session_state.get("role") == "Admin":
+            st.markdown("### Kelola File Dokumen")
+            st.caption("Gunakan bagian ini untuk menghapus lampiran dari Supabase Storage. Anda juga bisa menghapus seluruh baris dokumen beserta lampirannya.")
+            if filtered.empty:
+                st.info("Tidak ada dokumen pada hasil filter saat ini.")
+            else:
+                option_map = {
+                    f"{row['kode']} — {row['judul_dokumen']} ({row['id_dokumen']})": row
+                    for _, row in filtered.sort_values(["kode", "judul_dokumen"]).iterrows()
+                }
+                selected_label = st.selectbox("Pilih dokumen yang ingin dikelola", list(option_map.keys()), key="manage_doc_select")
+                selected = option_map[selected_label]
+                id_dokumen = str(selected.get("id_dokumen", "")).strip()
+                file_ref = str(selected.get("file_ref", "")).strip()
+                storage_path = resolve_storage_object_path(file_ref)
+
+                c_info_1, c_info_2 = st.columns([1, 2])
+                c_info_1.write(f"**ID:** {id_dokumen}")
+                c_info_2.write(f"**File ref:** {file_ref or '-'}")
+
+                public_url = build_public_url(file_ref) if storage_path else None
+                if public_url:
+                    st.link_button("Buka file saat ini", public_url)
+                elif file_ref:
+                    st.warning("File ref ini terlihat seperti URL/path manual, jadi aplikasi hanya akan mengosongkan referensinya dan tidak menghapus object storage.")
+                else:
+                    st.info("Dokumen ini belum memiliki lampiran file.")
+
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    if st.button("Hapus lampiran saja", type="secondary", use_container_width=True, disabled=not bool(file_ref)):
+                        try:
+                            removed = db.delete_document_file(id_dokumen, file_ref)
+                            st.cache_data.clear()
+                            if removed:
+                                st.success("Lampiran berhasil dihapus dari Supabase Storage dan referensi file dikosongkan.")
+                            else:
+                                st.success("Referensi file dikosongkan. Tidak ada object Supabase Storage yang dihapus karena file_ref bukan path storage LABORA.")
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(f"Gagal menghapus lampiran: {exc}")
+
+                with col_b:
+                    confirm_key = f"confirm_delete_{id_dokumen}"
+                    confirm_delete = st.checkbox("Saya yakin ingin menghapus seluruh data dokumen ini", key=confirm_key)
+                    if st.button("Hapus data dokumen + lampiran", type="primary", use_container_width=True, disabled=not confirm_delete):
+                        try:
+                            removed = db.delete_document_row(id_dokumen, file_ref)
+                            st.cache_data.clear()
+                            if removed:
+                                st.success("Data dokumen dan lampiran storage berhasil dihapus.")
+                            else:
+                                st.success("Data dokumen berhasil dihapus. Tidak ada object Supabase Storage yang dihapus.")
+                            st.rerun()
+                        except Exception as exc:
+                            st.error(f"Gagal menghapus dokumen: {exc}")
+        else:
+            st.caption("Fitur hapus lampiran hanya tersedia untuk Admin.")
     elif section == "SOP":
         render_table(data["sop"])
     elif section == "Modul K3":
@@ -1153,127 +939,33 @@ def render_documents_hub(data: Dict[str, pd.DataFrame]) -> None:
         render_table(data["instruksi_kerja"])
 
 
-def render_kelola_file(data: Dict[str, pd.DataFrame], db: Database) -> None:
-    st.subheader("Kelola File")
-    st.caption("Hapus file langsung dari storage online dan bersihkan referensinya dari database.")
-
-    role = st.session_state.get("role")
-    if role != "Admin":
-        st.info("Menu ini hanya tersedia untuk Admin.")
-        return
-
-    df = data["dokumen_inti"].copy()
-    if df.empty:
-        st.info("Belum ada data dokumen inti.")
-        return
-
-    df_with_file = df[df["file_ref"].astype(str).str.strip() != ""].copy()
-    if df_with_file.empty:
-        st.info("Belum ada dokumen yang memiliki file terlampir.")
-        return
-
-    keyword = st.text_input(
-        "Cari dokumen yang file-nya ingin dihapus",
-        placeholder="judul dokumen, kode, kategori, unit, atau nama file"
-    )
-
-    filtered = df_with_file.copy()
-    if keyword.strip():
-        mask = (
-            filtered["judul_dokumen"].astype(str).str.contains(keyword, case=False, na=False)
-            | filtered["kode"].astype(str).str.contains(keyword, case=False, na=False)
-            | filtered["kategori"].astype(str).str.contains(keyword, case=False, na=False)
-            | filtered["unit"].astype(str).str.contains(keyword, case=False, na=False)
-            | filtered["file_ref"].astype(str).str.contains(keyword, case=False, na=False)
-        )
-        filtered = filtered[mask]
-
-    if filtered.empty:
-        st.warning("Tidak ada dokumen yang cocok dengan pencarian.")
-        return
-
-    render_table(
-        filtered[[
-            "id_dokumen", "kategori", "kode", "judul_dokumen", "status", "unit", "file_ref"
-        ]],
-        height=320
-    )
-
-    options_map = {
-        f"{row['judul_dokumen']} | {row['kode']} | {row['file_ref']}": row["id_dokumen"]
-        for _, row in filtered.iterrows()
-    }
-
-    selected_label = st.selectbox(
-        "Pilih dokumen yang file-nya akan dihapus",
-        options=list(options_map.keys())
-    )
-
-    selected_id = options_map[selected_label]
-    selected_row = filtered[filtered["id_dokumen"] == selected_id].iloc[0]
-    selected_file_ref = str(selected_row["file_ref"]).strip()
-
-    st.warning("Aksi ini akan menghapus file dari Supabase Storage dan mengosongkan kolom file_ref di database.")
-    confirm = st.checkbox("Saya yakin ingin menghapus file ini")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🗑️ Hapus file terpilih", type="primary", use_container_width=True, disabled=not confirm):
-            try:
-                db.delete_storage_file(selected_file_ref)
-                db.update_row_by_id(
-                    "dokumen_inti",
-                    "id_dokumen",
-                    selected_id,
-                    {"file_ref": ""}
-                )
-                st.success("File berhasil dihapus dan referensi file di database sudah dibersihkan.")
-                st.rerun()
-            except Exception as exc:
-                st.error(f"Gagal menghapus file: {exc}")
-
-    with col2:
-        public_url = build_public_url(selected_file_ref)
-        if public_url:
-            st.link_button("Buka file saat ini", public_url, use_container_width=True)
-
-
 def render_evaluasi(data: Dict[str, pd.DataFrame]) -> None:
     st.subheader("Evaluasi & Insight")
     df = data["evaluasi"].copy()
     if df.empty:
         st.info("Belum ada data evaluasi.")
         return
-
     df["skor_num"] = safe_numeric(df["skor"])
     score = df["skor_num"]
-
     c1, c2, c3 = st.columns(3)
     c1.metric("Jumlah Evaluasi", len(df))
     c2.metric("Rata-rata Skor", f"{float(score.mean()):.1f}")
     c3.metric("Skor Terendah", f"{float(score.min()):.0f}")
-
     unit_summary = df.groupby("unit", as_index=False)["skor_num"].mean().sort_values("skor_num")
     st.markdown("### Unit dengan Skor Terendah")
     render_table(unit_summary.rename(columns={"skor_num": "skor"}).head(5), height=230)
-
     st.markdown("### Detail Evaluasi")
-    render_table(
-        df[["tanggal", "unit", "aspek", "skor", "kategori", "rekomendasi", "reviewer"]].sort_values("tanggal", ascending=False),
-        height=360
-    )
+    render_table(df[["tanggal", "unit", "aspek", "skor", "kategori", "rekomendasi", "reviewer"]].sort_values("tanggal", ascending=False), height=360)
 
 
 def render_admin_panel(data: Dict[str, pd.DataFrame]) -> None:
     st.subheader("Panel Admin")
     st.info("Panel admin pada versi cloud fokus pada monitoring data, storage online, dan pengecekan konfigurasi deploy.")
-
     total_files = int(data["dokumen_inti"]["file_ref"].astype(str).str.strip().ne("").sum()) if not data["dokumen_inti"].empty else 0
     col1, col2, col3 = st.columns(3)
     col1.metric("Dokumen dengan lampiran", total_files)
     col2.metric("Jumlah logbook", len(data["logbook"]))
     col3.metric("Jumlah evaluasi", len(data["evaluasi"]))
-
     st.markdown("### Konfigurasi deploy")
     st.write("- Database: Supabase Postgres")
     st.write(f"- Storage bucket: `{STORAGE_BUCKET}`")
@@ -1284,7 +976,6 @@ def render_admin_panel(data: Dict[str, pd.DataFrame]) -> None:
 def render_guidance(data: Dict[str, pd.DataFrame]) -> None:
     st.subheader("Panduan")
     st.markdown('<div class="section-box"><div class="section-title">Mulai dalam 3 langkah</div>', unsafe_allow_html=True)
-
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown('<div class="action-card"><h4>1. Lihat prioritas</h4><p>Buka Beranda & Prioritas untuk melihat draft penting, gap aktif, dan skor evaluasi terendah.</p></div>', unsafe_allow_html=True)
@@ -1292,10 +983,8 @@ def render_guidance(data: Dict[str, pd.DataFrame]) -> None:
         st.markdown('<div class="action-card"><h4>2. Cari dokumen</h4><p>Gunakan Cari & Buka Dokumen untuk menemukan metadata dokumen dari satu tempat.</p></div>', unsafe_allow_html=True)
     with c3:
         st.markdown('<div class="action-card"><h4>3. Input harian</h4><p>Admin dapat menambah logbook, evaluasi, dan dokumen inti langsung dari aplikasi.</p></div>', unsafe_allow_html=True)
-
     st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("### Isi Panduan Data")
-
     panduan_df = data["panduan"].sort_values("urutan") if not data["panduan"].empty and "urutan" in data["panduan"].columns else data["panduan"]
     for _, row in panduan_df.iterrows():
         st.markdown(f"#### {row['bagian']}")
@@ -1303,7 +992,7 @@ def render_guidance(data: Dict[str, pd.DataFrame]) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title=APP_NAME, page_icon="🧪", layout="centered")
+    st.set_page_config(page_title=APP_NAME, page_icon="🧪", layout="wide")
     inject_css()
 
     try:
@@ -1317,7 +1006,6 @@ def main() -> None:
         return
 
     db = Database(supabase)
-
     if not st.session_state.get("logged_in"):
         login_form()
         return
@@ -1342,9 +1030,7 @@ def main() -> None:
     elif menu == "Evaluasi & Insight":
         render_evaluasi(data)
     elif menu == "Pusat Dokumen":
-        render_documents_hub(data)
-    elif menu == "Kelola File":
-        render_kelola_file(data, db)
+        render_documents_hub(data, db)
     elif menu == "Panel Admin":
         if st.session_state.get("role") != "Admin":
             st.warning("Menu ini hanya dapat diakses oleh Admin.")
