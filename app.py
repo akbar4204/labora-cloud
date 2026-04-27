@@ -369,6 +369,25 @@ class Database:
     def update_document_file_ref(self, id_dokumen: str, file_ref: str) -> None:
         self.client.table("dokumen_inti").update({"file_ref": file_ref}).eq("id_dokumen", id_dokumen).execute()
 
+    def storage_object_exists(self, file_ref: str) -> bool:
+        object_path = resolve_storage_object_path(file_ref)
+        if not object_path:
+            return False
+
+        path_obj = Path(object_path)
+        parent = "" if str(path_obj.parent) == "." else path_obj.parent.as_posix()
+        file_name = path_obj.name
+        try:
+            items = self.client.storage.from_(STORAGE_BUCKET).list(parent)
+        except Exception:
+            return False
+
+        for item in items or []:
+            name = item.get("name") if isinstance(item, dict) else getattr(item, "name", None)
+            if name == file_name:
+                return True
+        return False
+
     def delete_storage_object(self, file_ref: str) -> bool:
         object_path = resolve_storage_object_path(file_ref)
         if not object_path:
@@ -621,7 +640,42 @@ def global_search_results(data: Dict[str, pd.DataFrame], keyword: str) -> pd.Dat
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
-def render_search(data: Dict[str, pd.DataFrame]) -> None:
+def is_file_ref_searchable(file_ref: str, db: Database) -> bool:
+    ref = str(file_ref or "").strip()
+    if not ref:
+        return False
+
+    parsed = urlparse(ref)
+    if parsed.scheme in {"http", "https"}:
+        storage_path = resolve_storage_object_path(ref)
+        if storage_path:
+            return db.storage_object_exists(storage_path)
+        return True
+
+    return db.storage_object_exists(ref)
+
+
+def hide_deleted_document_results(results: pd.DataFrame, db: Database) -> tuple[pd.DataFrame, int]:
+    if results.empty or "sumber" not in results.columns:
+        return results, 0
+
+    keep_mask: List[bool] = []
+    hidden_count = 0
+    for _, row in results.iterrows():
+        if str(row.get("sumber", "")) != "Dokumen Inti":
+            keep_mask.append(True)
+            continue
+
+        file_ref = str(row.get("file_ref", "")).strip()
+        keep = is_file_ref_searchable(file_ref, db)
+        keep_mask.append(keep)
+        if not keep:
+            hidden_count += 1
+
+    return results.loc[keep_mask].copy(), hidden_count
+
+
+def render_search(data: Dict[str, pd.DataFrame], db: Database) -> None:
     st.subheader("Cari & Buka Dokumen")
     st.caption("Cari lintas dokumen inti, SOP, modul K3, dan instruksi kerja dari satu tempat.")
     keyword = st.text_input("Cari judul, kode, unit, PIC, atau kata kunci lain", placeholder="contoh: APD, inventaris, K3, praktikum")
@@ -629,11 +683,15 @@ def render_search(data: Dict[str, pd.DataFrame]) -> None:
         st.info("Masukkan kata kunci untuk memulai pencarian.")
         return
     results = global_search_results(data, keyword)
+    results, hidden_deleted_count = hide_deleted_document_results(results, db)
+    if hidden_deleted_count:
+        st.info(f"{hidden_deleted_count} dokumen yang lampirannya sudah kosong/hilang disembunyikan dari hasil pencarian.")
     if results.empty:
-        st.warning("Tidak ada hasil yang cocok dengan kata kunci tersebut.")
+        st.warning("Tidak ada hasil yang cocok dengan kata kunci tersebut, atau semua dokumen yang cocok sudah tidak memiliki file aktif.")
         return
     st.success(f"Ditemukan {len(results)} hasil yang relevan.")
-    source_filter = st.multiselect("Filter sumber", sorted(results["sumber"].unique().tolist()), default=sorted(results["sumber"].unique().tolist()))
+    source_options = sorted(results["sumber"].unique().tolist())
+    source_filter = st.multiselect("Filter sumber", source_options, default=source_options)
     if source_filter:
         results = results[results["sumber"].isin(source_filter)]
 
@@ -1022,7 +1080,7 @@ def main() -> None:
     if menu == "Beranda & Prioritas":
         render_dashboard(data)
     elif menu == "Cari & Buka Dokumen":
-        render_search(data)
+        render_search(data, db)
     elif menu == "Cek Gap & Tindak Lanjut":
         render_gap_analysis(data)
     elif menu == "Input Harian":
